@@ -60,4 +60,3 @@ class CategoryDetailApiView(APIView):
         category = Category.objects.get(id=pk)
         category.delete()
         return Response({'message': 'Object is deleted!'}, status=status.HTTP_200_OK)
-
