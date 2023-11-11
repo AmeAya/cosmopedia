@@ -16,9 +16,30 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework.permissions import AllowAny
+
+SchemaView = get_schema_view(
+    info=openapi.Info(
+        title='Cosmopedia',
+        default_version='v1.0',
+        description='This is encyclopedia about space terms',
+        terms_of_service='',
+        contact=openapi.Contact(name='Dias Bolatov', url='', email='deobackstep@gmail.com'),
+        license=openapi.License(name='JustCode', url='')
+    ),
+    patterns=[
+        path('category/', include('category_app.urls')),
+        path('article/', include('article_app.urls')),
+    ],
+    public=True,
+    permission_classes=[AllowAny, ]
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('category/', include('category_app.urls')),
     path('article/', include('article_app.urls')),
+    path('swagger/', SchemaView.with_ui()),
 ]

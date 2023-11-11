@@ -10,6 +10,12 @@ class UserSerializer(ModelSerializer):
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_superuser']
 
 
+class UserUpdateSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+
 class ArticleSerializer(ModelSerializer):
     class Meta:
         model = Article
