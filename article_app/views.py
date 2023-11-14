@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST
 
 from .models import Article
-from .serializers import ArticleSerializer, UserSerializer, UserUpdateSerializer
+from .serializers import ArticleSerializer, UserSerializer, UserUpdateSerializer, UserCreateSerializer
 
 from django.contrib.auth import login, logout, authenticate
 
@@ -85,3 +85,21 @@ class ProfileApiView(APIView):
             data = UserSerializer(user).data
             return Response(data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        user = request.user
+        print(user.username, request.data['reason'])
+        user.delete()
+        return Response({'message': 'User is deleted!'}, status=HTTP_200_OK)
+
+
+class RegistrationApiView(APIView):
+    permission_classes = [AllowAny, ]
+
+    def post(self, request):
+        serializer = UserCreateSerializer(data=request.data, partial=False)
+        if serializer.is_valid():
+            serializer.save()  # Вызывается метод create у сериалайзера
+            return Response({'message': 'Registration Done!'}, status=HTTP_200_OK)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+

@@ -16,6 +16,18 @@ class UserUpdateSerializer(ModelSerializer):
         fields = ['first_name', 'last_name', 'email']
 
 
+class UserCreateSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'first_name', 'last_name', 'email']
+
+    def create(self, validated_data):  # Вызывается с помощью методы .save()
+        user = User.objects.create(**validated_data)
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+
 class ArticleSerializer(ModelSerializer):
     class Meta:
         model = Article
