@@ -41,3 +41,9 @@ class ArticleSerializer(ModelSerializer):
         representation['author'] = UserSerializer(instance.author).data
         representation['category'] = CategorySerializer(instance.category, many=True).data
         return representation
+
+
+class ArticleCreateSerializer(ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ['title', 'category', 'author']

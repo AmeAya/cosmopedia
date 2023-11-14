@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_400_BAD_REQUEST
 
 from .models import Article
+from category_app.models import Category
 from .serializers import ArticleSerializer, UserSerializer, UserUpdateSerializer, UserCreateSerializer
 
 from django.contrib.auth import login, logout, authenticate
@@ -12,7 +13,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 
-class ArticleApiView(APIView):
+class SelfArticleApiView(APIView):
     permission_classes = [IsAuthenticated, ]  # Апи выдает ответ только авторизованным пользователям
 
     @swagger_auto_schema(
@@ -77,7 +78,7 @@ class ProfileApiView(APIView):
             400: '',
         }
     )
-    def patch(self, request):
+    def patch(self, request):  # UPDATE USER
         user = request.user
         serializer = UserUpdateSerializer(user, request.data, partial=True)
         if serializer.is_valid():
@@ -86,9 +87,10 @@ class ProfileApiView(APIView):
             return Response(data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-    def delete(self, request):
+    def delete(self, request):  # DELETE USER
         user = request.user
-        print(user.username, request.data['reason'])
+        if 'reason' in request.data.keys():
+            print(user.username, request.data['reason'])
         user.delete()
         return Response({'message': 'User is deleted!'}, status=HTTP_200_OK)
 
@@ -100,6 +102,41 @@ class RegistrationApiView(APIView):
         serializer = UserCreateSerializer(data=request.data, partial=False)
         if serializer.is_valid():
             serializer.save()  # Вызывается метод create у сериалайзера
-            return Response({'message': 'Registration Done!'}, status=HTTP_200_OK)
+            return Response(serializer.data, status=HTTP_200_OK)
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
+
+class ArticleApiView(APIView):
+    permission_classes = [AllowAny, ]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='order_by', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=False,
+                              description='Отправляем название филда по которому нужно расставить'),
+            openapi.Parameter(name='category', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER, required=False),
+        ],
+        responses={
+            200: ArticleSerializer()
+        }
+    )
+    def get(self, request):
+        articles = Article.objects.all()
+        if 'order_by' in request.GET.keys():
+            ordering = request.GET.get('order_by')
+            articles = articles.order_by(ordering)
+        if 'category' in request.GET.keys():
+            category_id = request.GET.get('category')
+            category = Category.objects.get(id=category_id)
+            articles = articles.filter(category=category)
+        data = ArticleSerializer(articles, many=True).data
+        return Response(data, status=HTTP_200_OK)
+
+    def post(self, request):
+        if request.user.is_authenticated:
+            request.data['author'] = request.user.pk  # Вручную добавили в data новый ключ
+            serializer = ArticleSerializer(data=request.data, partial=False)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=HTTP_200_OK)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Вы должны авторизоваться'}, status=HTTP_403_FORBIDDEN)
