@@ -5,7 +5,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_400_BAD_
 
 from .models import Article
 from category_app.models import Category
-from .serializers import ArticleSerializer, UserSerializer, UserUpdateSerializer, UserCreateSerializer
+from .serializers import *
 
 from django.contrib.auth import login, logout, authenticate
 
@@ -134,9 +134,39 @@ class ArticleApiView(APIView):
     def post(self, request):
         if request.user.is_authenticated:
             request.data['author'] = request.user.pk  # Вручную добавили в data новый ключ
-            serializer = ArticleSerializer(data=request.data, partial=False)
+            serializer = ArticleCreateSerializer(data=request.data, partial=False)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=HTTP_200_OK)
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
         return Response({'message': 'Вы должны авторизоваться'}, status=HTTP_403_FORBIDDEN)
+
+
+class ArticleDetailApiView(APIView):
+    permission_classes = [AllowAny, ]
+
+    def get(self, request, article_id):
+        article = Article.objects.get(id=article_id)
+        data = ArticleSerializer(article, many=False).data
+        return Response(data, status=HTTP_200_OK)
+
+    def patch(self, request, article_id):
+        article = Article.objects.get(id=article_id)
+        # print(type(request.user))  # SimpleLazyObject - это ярлык, лишь ссылка на юзера, а не сам юзер
+        # print(type(article.author))  # models.User - объект модели django user
+        if request.user == article.author or request.user.is_staff:
+            # == работает потому что сравнивает по значению. А is не работает потому что сравнивает по типу
+            serializer = ArticleUpdateSerializer(article, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                data = ArticleSerializer(article, many=False).data
+                return Response(data, status=HTTP_200_OK)
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Вы не автор статьи'}, status=HTTP_403_FORBIDDEN)
+
+    def delete(self, request, article_id):
+        article = Article.objects.get(id=article_id)
+        if request.user == article.author:
+            article.delete()
+            return Response({'message': 'Статья успешно удалена'}, status=HTTP_200_OK)
+        return Response({'message': 'Вы не автор статьи'}, status=HTTP_403_FORBIDDEN)

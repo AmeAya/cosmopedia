@@ -47,3 +47,9 @@ class ArticleCreateSerializer(ModelSerializer):
     class Meta:
         model = Article
         fields = ['title', 'category', 'author']
+
+
+class ArticleUpdateSerializer(ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ['title', 'category']
