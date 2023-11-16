@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'article_app',
     'category_app',
+    'comment_app',
     'rest_framework',
     'drf_yasg',
 ]

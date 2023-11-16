@@ -2,6 +2,7 @@ from rest_framework.serializers import ModelSerializer
 from .models import Article
 from category_app.serializers import CategorySerializer
 from django.contrib.auth.models import User
+from comment_app.serializers import CommentSerializer
 
 
 class UserSerializer(ModelSerializer):
@@ -40,6 +41,7 @@ class ArticleSerializer(ModelSerializer):
         representation['created_at'] = representation['created_at'].split('.')[0].replace('T', ' ')
         representation['author'] = UserSerializer(instance.author).data
         representation['category'] = CategorySerializer(instance.category, many=True).data
+        representation['comments'] = CommentSerializer(instance.comments, many=True).data
         return representation
 
 
