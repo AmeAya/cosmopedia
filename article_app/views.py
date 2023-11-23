@@ -121,6 +121,8 @@ class ArticleApiView(APIView):
     )
     def get(self, request):
         articles = Article.objects.all()
+        import random
+        print(random.sample(list(articles), 2))
         if 'order_by' in request.GET.keys():
             ordering = request.GET.get('order_by')
             articles = articles.order_by(ordering)
@@ -128,6 +130,12 @@ class ArticleApiView(APIView):
             category_id = request.GET.get('category')
             category = Category.objects.get(id=category_id)
             articles = articles.filter(category=category)
+        if 'search' in request.GET.keys():
+            search = request.GET.get('search')
+            articles = articles.filter(title__contains=search).union(articles.filter(text__contains=search))
+            # <field>.contains=<str> => Возвращает только те записи, у которых в <field> содержится строка <str>
+            # objects.filter и objects.all возвращают QuerySet(Подобие set в python). А значит для них работают:
+            # union, difference, symmetric_difference, intersection
         data = ArticleSerializer(articles, many=True).data
         return Response(data, status=HTTP_200_OK)
 
