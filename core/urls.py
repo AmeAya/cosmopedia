@@ -19,6 +19,8 @@ from django.urls import path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework.permissions import AllowAny
+from django.conf.urls.static import static
+from django.conf import settings
 
 SchemaView = get_schema_view(
     info=openapi.Info(
@@ -43,3 +45,5 @@ urlpatterns = [
     path('article/', include('article_app.urls')),
     path('swagger/', SchemaView.with_ui()),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

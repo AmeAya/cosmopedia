@@ -12,6 +12,8 @@ from django.contrib.auth import login, logout, authenticate
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
+from rest_framework.parsers import MultiPartParser
+
 
 class SelfArticleApiView(APIView):
     permission_classes = [IsAuthenticated, ]  # Апи выдает ответ только авторизованным пользователям
@@ -108,6 +110,7 @@ class RegistrationApiView(APIView):
 
 class ArticleApiView(APIView):
     permission_classes = [AllowAny, ]
+    parser_classes = [MultiPartParser, ]
 
     @swagger_auto_schema(
         manual_parameters=[
@@ -139,6 +142,17 @@ class ArticleApiView(APIView):
         data = ArticleSerializer(articles, many=True).data
         return Response(data, status=HTTP_200_OK)
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='title', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='category', in_=openapi.IN_FORM, type=openapi.TYPE_INTEGER, required=True),
+            openapi.Parameter(name='image', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True),
+        ],
+        responses={
+            200: ArticleCreateSerializer(),
+            403: 'Username or/and Password is not valid!',
+        }
+    )
     def post(self, request):
         if request.user.is_authenticated:
             request.data['author'] = request.user.pk  # Вручную добавили в data новый ключ
@@ -156,6 +170,7 @@ class ArticleDetailApiView(APIView):
     def get(self, request, article_id):
         article = Article.objects.get(id=article_id)
         data = ArticleSerializer(article, many=False).data
+        data['test'] = 'new data'
         return Response(data, status=HTTP_200_OK)
 
     def patch(self, request, article_id):
@@ -178,3 +193,14 @@ class ArticleDetailApiView(APIView):
             article.delete()
             return Response({'message': 'Статья успешно удалена'}, status=HTTP_200_OK)
         return Response({'message': 'Вы не автор статьи'}, status=HTTP_403_FORBIDDEN)
+
+
+class EmailApiView(APIView):
+    permission_classes = [AllowAny, ]
+
+    def post(self, request):
+        text = request.data['text']
+        receiver = request.data['receiver']
+        from .functions import send_email
+        send_email(text, receiver)
+        return Response({'message': 'Email is sent!'}, status=HTTP_200_OK)
