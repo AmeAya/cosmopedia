@@ -125,7 +125,6 @@ class ArticleApiView(APIView):
     def get(self, request):
         articles = Article.objects.all()
         import random
-        print(random.sample(list(articles), 2))
         if 'order_by' in request.GET.keys():
             ordering = request.GET.get('order_by')
             articles = articles.order_by(ordering)
